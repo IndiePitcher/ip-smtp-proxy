@@ -41,7 +41,8 @@ app.listen(PORT, () => {
 // }
 
 const smtp = new SMTPServer({
-  authOptional: true,
+  secure: true,
+  authOptional: false,
   disabledCommands: ['STARTTLS'],
   onAuth(auth, session, callback) {
     console.log(`username: ${auth.username}, password: ${auth.password}`);
@@ -66,6 +67,10 @@ const smtp = new SMTPServer({
       callback(new Error('Error processing email'));
     }
   },
+});
+
+smtp.on("error", (err) => {
+  console.log("Error %s", err.message);
 });
 
 const SMTP_PORT = process.env.SMTP_PORT || 2525;
