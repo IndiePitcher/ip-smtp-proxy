@@ -40,8 +40,10 @@ app.listen(PORT, () => {
 //   }
 // }
 
+const SMTP_PORT: number = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 2525;
+
 const smtp = new SMTPServer({
-  secure: true,
+  secure: SMTP_PORT === 465,
   authOptional: false,
   disabledCommands: ['STARTTLS'],
   onAuth(auth, session, callback) {
@@ -72,8 +74,6 @@ const smtp = new SMTPServer({
 smtp.on("error", (err) => {
   console.log("Error %s", err.message);
 });
-
-const SMTP_PORT = process.env.SMTP_PORT || 2525;
 
 smtp.listen(SMTP_PORT, () => {
   console.log(`SMTP server listening on port ${SMTP_PORT}`);
