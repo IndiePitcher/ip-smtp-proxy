@@ -4,9 +4,9 @@ import { SMTPServer } from 'smtp-server';
 import { sendTestEmail } from './sendTestEmail';
 import { IndiePitcher } from 'indiepitcher';
 import Mixpanel from 'mixpanel';
-import Sentry from '@sentry/node';
+const Sentry = require('@sentry/node');
 
-const mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN ?? '');
+const mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN ?? 'xxx');
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
