@@ -1,79 +1,141 @@
 import express, { Request, Response } from 'express';
-import { simpleParser } from 'mailparser';
+import { AddressObject, simpleParser } from 'mailparser';
 import { SMTPServer } from 'smtp-server';
 import { sendTestEmail } from './sendTestEmail';
+import { IndiePitcher } from 'indiepitcher';
+import Mixpanel from 'mixpanel';
+import Sentry from '@sentry/node';
+
+const mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN ?? '');
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+});
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 app.get('/', async (req: Request, res: Response) => {
-  res.send('Hello, TypeScript with Express xxx!');
+  res.send('To use IndiePitcher\'s SMTP proxy server:\nhost: smtp.indiepitcher.com\nport: 587\nusername: indiepitcher\npassword: YOUR_API_KEY');
 });
 
-app.get('/test', async (req: Request, res: Response) => {
-  await sendTestEmail();
-  res.send('Hello, TypeScript with Express!');
-});
+// app.get('/test', async (req: Request, res: Response) => {
+//   await sendTestEmail();
+//   res.send('Hello, TypeScript with Express!');
+// });
 
 app.listen(PORT, () => {
-  console.log(`This is IndiePitcher proxy SMTP server.`);
+  console.log(`This is IndiePitcher proxy SMTP server. Listening on port ${PORT}`);
 });
 
 // SMTP Server
 
-// async function handleData(stream, session, callback) {
-//   try {
-//     const parsed = await simpleParser(stream);
-    
-//     await this.resend.emails.send({
-//       from: session.fromAddress,
-//       to: session.toAddress,
-//       subject: parsed.subject,
-//       html: parsed.html || parsed.textAsHtml,
-//       text: parsed.text
-//     });
-
-//     callback();
-//   } catch (error) {
-//     console.error('Error processing email:', error);
-//     callback(new Error('Error processing email'));
-//   }
-// }
-
-const SMTP_PORT: number = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 2525;
+const privkey = atob(process.env.privkey ?? '');
+const cert = atob(process.env.cert ?? '');
 
 const smtp = new SMTPServer({
-  secure: SMTP_PORT === 465,
-  authOptional: false,
-  disabledCommands: ['STARTTLS'],
-  onAuth(auth, session, callback) {
-    console.log(`username: ${auth.username}, password: ${auth.password}`);
-    callback(null, { user: auth.password }); // where 123 is the user id or similar property
+  secure: false,
+  key: privkey,
+  cert: cert,
+  // disabledCommands: ['STARTTLS'],
+  async onAuth(auth, session, callback) {
+    
+    if (auth.username !== "indiepitcher") {
+      Sentry.captureException(new Error("Username must be set to 'indiepitcher'"));
+      return callback(new Error("Username must be set to 'indiepitcher'"));
+    }
+
+    if (!auth.password) {
+      Sentry.captureException(new Error("API key must be set as the password"));
+      return callback(new Error("API key must be set as the password"));
+    }
+
+    const indiepitcher = new IndiePitcher(auth.password);
+    try {
+      // TODO: add some sort of check token method
+      await indiepitcher.listContacts();
+      callback(null, { user: auth.password });
+    } catch (error) {
+      console.error('Error authenticating:', error);
+      Sentry.captureException(error);
+      return callback(new Error('Error authenticating. Make sure you have provided a valid IndiePitcher API key as the password.'));
+    }
   },
   async onData(stream, session, callback) {
-
-    // if (session.user
-
     try {
+      if (!session.user) {
+        console.error('No user found');
+        Sentry.captureException(new Error('No user found'));
+        callback(new Error('No user found'));
+        return;
+      }
+      const indiepitcher = new IndiePitcher(session.user);
       const parsed = await simpleParser(stream);
-      console.log('-------------------');
-      console.log(session.user);
-      console.log(parsed.html);
-      console.log(parsed.subject);
-      console.log(parsed.from?.text);
-      console.log('-------------------');
-      // console.log(JSON.stringify(parsed));
+
+      if (!parsed.html) {
+        console.error('Only html emails are currently supported');
+        Sentry.captureException(new Error('Only html emails are currently supported'));
+        callback(new Error('Only html emails are currently supported'));
+        return;
+      }
+
+      const toEmails = (parsed.to as AddressObject).value;
+
+      if (!toEmails || toEmails.length === 0) {
+        console.error('No to email found');
+        Sentry.captureException(new Error('No to email found'));
+        callback(new Error('No to email found'));
+        return;
+      }
+
+      if (toEmails.length > 1) {
+        console.error('Only one to email is currently supported');
+        Sentry.captureException(new Error('Only one to email is currently supported'));
+        callback(new Error('Only one to email is currently supported'));
+        return;
+      }
+
+      const to = toEmails[0];
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(parsed.html, "text/html");
+      const markdownElement = doc.querySelector("indiepitcher-markdown");
+
+      if (markdownElement) {
+        const content = markdownElement.textContent?.trim();
+        await indiepitcher.sendEmail({
+          to: to.address ?? '',
+          subject: parsed.subject ?? '',
+          body: content ?? '',
+          bodyFormat: 'markdown',
+        });
+      } else {
+        await indiepitcher.sendEmail({
+          to: to.address ?? '',
+          subject: parsed.subject ?? '',
+          body: parsed.html,
+          bodyFormat: 'html',
+        });
+      }
+
+      console.log(`Email ${parsed.subject} sent to '${to.name}' '${to.address}' | body: '${parsed.html}'`);
+
       callback();
+
     } catch (error) {
       console.error('Error processing email:', error);
+      Sentry.captureException(error);
       callback(new Error('Error processing email'));
     }
   },
 });
 
-smtp.on("error", (err) => {
-  console.log("Error %s", err.message);
+smtp.on("error", (error) => {
+  Sentry.captureException(error);
+  console.log("Error %s", error.message);
 });
+
+const SMTP_PORT: number = 587;
 
 smtp.listen(SMTP_PORT, () => {
   console.log(`SMTP server listening on port ${SMTP_PORT}`);
