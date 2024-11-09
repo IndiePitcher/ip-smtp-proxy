@@ -100,14 +100,13 @@ const smtp = new SMTPServer({
 
       const parser = new DOMParser();
       const doc = parser.parseFromString(parsed.html, "text/html");
-      const markdownElement = doc.querySelector("indiepitcher-markdown");
+      const markdown = doc.getElementsByTagName('indiepitcher-markdown')[0].textContent;
 
-      if (markdownElement) {
-        const content = markdownElement.textContent?.trim();
+      if (markdown) {
         await indiepitcher.sendEmail({
           to: to.address ?? '',
           subject: parsed.subject ?? '',
-          body: content ?? '',
+          body: markdown,
           bodyFormat: 'markdown',
         });
       } else {
