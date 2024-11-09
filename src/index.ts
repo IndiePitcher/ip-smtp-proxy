@@ -5,6 +5,7 @@ import { sendTestEmail } from './sendTestEmail';
 import { IndiePitcher } from 'indiepitcher';
 import Mixpanel from 'mixpanel';
 const Sentry = require('@sentry/node');
+import { DOMParser } from 'xmldom';
 
 const mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN ?? 'xxx');
 
