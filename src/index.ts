@@ -100,9 +100,12 @@ const smtp = new SMTPServer({
 
       const parser = new DOMParser();
       const doc = parser.parseFromString(parsed.html, "text/html");
-      const markdown = doc.getElementsByTagName('indiepitcher-markdown')[0].textContent;
+      const markdown = doc.getElementsByTagName('indiepitcher-markdown')[0]?.textContent;
 
       if (markdown) {
+        if (markdown.length ===0) {
+          throw new Error('Found <indiepitcher-markdown></indiepitcher-markdown> with empty body, this is not allowed. Please provide a markdown body or remove the tag to send an HTML email.');
+        }
         await indiepitcher.sendEmail({
           to: to.address ?? '',
           subject: parsed.subject ?? '',
