@@ -100,7 +100,7 @@ const smtp = new SMTPServer({
 
       const parser = new DOMParser();
       const doc = parser.parseFromString(parsed.html, "text/html");
-      const markdown = doc.getElementsByTagName('indiepitcher-markdown')[0]?.textContent;
+      const markdown = doc.getElementsByTagName('indiepitcher-markdown')[0]?.innerHTML;
 
       if (markdown) {
         if (markdown.length ===0) {
