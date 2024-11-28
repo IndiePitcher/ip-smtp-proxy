@@ -4,8 +4,8 @@ import { SMTPServer } from 'smtp-server';
 import { sendTestEmail } from './sendTestEmail';
 import { IndiePitcher } from 'indiepitcher';
 import Mixpanel from 'mixpanel';
+import { extractMarkdown } from './extractmarkdown';
 const Sentry = require('@sentry/node');
-import { DOMParser } from 'xmldom';
 
 const mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN ?? 'xxx');
 
@@ -98,9 +98,7 @@ const smtp = new SMTPServer({
 
       const to = toEmails[0];
 
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(parsed.html, "text/html");
-      const markdown = doc.getElementsByTagName('indiepitcher-markdown')[0]?.innerHTML;
+      const markdown = await extractMarkdown(parsed.html);
 
       if (markdown) {
         if (markdown.length ===0) {
