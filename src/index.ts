@@ -63,6 +63,7 @@ const smtp = new SMTPServer({
     }
   },
   async onData(stream, session, callback) {
+    session.hostNameAppearsAs
     try {
       if (!session.user) {
         console.error('No user found');
@@ -119,7 +120,7 @@ const smtp = new SMTPServer({
         });
       }
 
-      console.log(`Email ${parsed.subject} sent to '${to.name}' '${to.address}' | body: '${parsed.html}'`);
+      console.log(`${session.hostNameAppearsAs} | ${session.clientHostname} | ${session.remoteAddress} - Email ${parsed.subject} sent to '${to.name}' '${to.address}' | body: '${parsed.html?.substring(0, 50)}...'`);
 
       callback();
 
