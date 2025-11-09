@@ -36,6 +36,11 @@ jobs:
       - name: Update minor versions
         run: npm update --save
 
+      - name: Run typecheck
+        id: typecheck
+        run: npm run typecheck
+        continue-on-error: true
+
       - name: Run tests
         id: test
         run: npm test
@@ -57,13 +62,14 @@ jobs:
 
             **Test Results**
             Tests ${{ steps.test.outcome == 'success' && 'passed ✅' || 'failed ❌' }}
+            Typecheck ${{ steps.typecheck.outcome == 'success' && 'passed ✅' || 'failed ❌' }}
 
             This PR will be automatically merged if tests pass.
           branch: dependency-update-${{ github.run_number }}
           delete-branch: true
 
       - name: Auto-merge PR if tests pass
-        if: steps.test.outcome == 'success' && steps.create-pr.outputs.pull-request-number != ''
+        if: steps.test.outcome == 'success' && steps.typecheck.outcome == 'success' && steps.create-pr.outputs.pull-request-number != ''
         run: |
           # Try to enable auto-merge first (requires branch protection)
           gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} --auto --squash || \
@@ -79,9 +85,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Comment on PR if tests failed
-        if: steps.test.outcome != 'success' && steps.create-pr.outputs.pull-request-number != ''
+        if: (steps.test.outcome != 'success' || steps.typecheck.outcome != 'success') && steps.create-pr.outputs.pull-request-number != ''
         run: |
           gh pr comment ${{ steps.create-pr.outputs.pull-request-number }} \
-            --body "⚠️ Tests failed after dependency update. Please review the changes manually."
+            --body "⚠️ Tests or typecheck failed after dependency update. Please review the changes manually."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
