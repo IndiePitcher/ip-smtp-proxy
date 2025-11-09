@@ -2,6 +2,12 @@
 
 SMTP proxy server for [IndiePitcher](https://indiepitcher.com) - enables sending transactional emails via SMTP protocol.
 
+## 🏠 Self-Hosting
+
+**This is the source code for the IndiePitcher SMTP proxy that you can self-host.** The official hosted version is available at **smtp.indiepitcher.com** and requires no setup.
+
+⚠️ **Important**: If you choose to self-host, you'll need to manage your own SSL/TLS certificates for secure SMTP connections using something like certbot.
+
 ## Overview
 
 This service provides an SMTP interface to IndiePitcher's email API, allowing integration with services like Supabase Auth, Firebase Auth, and other platforms that require SMTP for sending emails.
