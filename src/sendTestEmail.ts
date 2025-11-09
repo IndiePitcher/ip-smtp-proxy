@@ -8,7 +8,7 @@ export async function sendTestEmail() {
       port: 587,
       auth: {
         user: "indiepitcher",
-        pass: "sc_3fac03575fe7fd114db9ae4861156ebcd3657f15d6dae0e55d2fdc42ddc28569"
+        pass: "sc_3fac03575fe7fd114db9ae4861156ebcd3657f15d6dae0e55d2fdc42ddc28569" // this key is invalidated
       }
     });
   
