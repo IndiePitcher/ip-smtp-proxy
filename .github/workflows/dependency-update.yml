@@ -1,0 +1,84 @@
+name: Monthly Dependency Update
+
+on:
+  schedule:
+    # Run on the first day of every month at 00:00 UTC
+    - cron: '0 0 1 * *'
+  workflow_dispatch: # Allow manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for major version updates
+        id: check-major
+        run: |
+          npm outdated --json > outdated.json || true
+          node .github/scripts/check-major-updates.js >> $GITHUB_OUTPUT
+
+      - name: Update minor versions
+        run: npm update --save
+
+      - name: Run tests
+        id: test
+        run: npm test
+        continue-on-error: true
+
+      - name: Create Pull Request
+        id: create-pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update dependencies (minor versions)'
+          title: 'chore: Monthly dependency update'
+          body: |
+            This PR updates minor and patch versions of dependencies.
+
+            **Changes**
+            - Updated dependencies to their latest minor versions
+            - Tests have been run automatically
+
+            **Test Results**
+            Tests ${{ steps.test.outcome == 'success' && 'passed ✅' || 'failed ❌' }}
+
+            This PR will be automatically merged if tests pass.
+          branch: dependency-update-${{ github.run_number }}
+          delete-branch: true
+
+      - name: Enable auto-merge
+        if: steps.test.outcome == 'success' && steps.create-pr.outputs.pull-request-number != ''
+        run: |
+          gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} --auto --squash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create issues for major version updates
+        if: steps.check-major.outputs.MAJOR_UPDATES_FOUND == 'true'
+        run: node .github/scripts/create-major-update-issues.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on PR if tests failed
+        if: steps.test.outcome != 'success' && steps.create-pr.outputs.pull-request-number != ''
+        run: |
+          gh pr comment ${{ steps.create-pr.outputs.pull-request-number }} \
+            --body "⚠️ Tests failed after dependency update. Please review the changes manually."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
