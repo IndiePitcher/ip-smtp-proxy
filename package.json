@@ -16,14 +16,14 @@
   "description": "",
   "dependencies": {
     "@sentry/cli": "^2.58.4",
-    "@sentry/node": "^10.37.0",
+    "@sentry/node": "^10.38.0",
     "express": "^5.2.1",
     "fs": "^0.0.1-security",
     "indiepitcher": "^1.5.0",
-    "mailparser": "^3.9.1",
+    "mailparser": "^3.9.3",
     "mixpanel": "^0.18.1",
     "nodemailer": "^7.0.13",
-    "smtp-server": "^3.18.0"
+    "smtp-server": "^3.18.1"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",
