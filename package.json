@@ -16,11 +16,11 @@
   "description": "",
   "dependencies": {
     "@sentry/cli": "^2.58.5",
-    "@sentry/node": "^10.47.0",
+    "@sentry/node": "^10.48.0",
     "express": "^5.2.1",
     "fs": "^0.0.1-security",
     "indiepitcher": "^1.5.0",
-    "mailparser": "^3.9.7",
+    "mailparser": "^3.9.8",
     "mixpanel": "^0.18.1",
     "nodemailer": "^7.0.13",
     "smtp-server": "^3.18.4"
