@@ -16,7 +16,7 @@
   "description": "",
   "dependencies": {
     "@sentry/cli": "^2.58.6",
-    "@sentry/node": "^10.63.0",
+    "@sentry/node": "^10.64.0",
     "express": "^5.2.1",
     "fs": "^0.0.1-security",
     "indiepitcher": "^1.5.0",
@@ -30,7 +30,7 @@
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/mailparser": "^3.4.6",
-    "@types/node": "^24.13.2",
+    "@types/node": "^24.13.3",
     "@types/node-fetch": "^2.6.13",
     "@types/nodemailer": "^7.0.12",
     "@types/smtp-server": "^3.5.13",
