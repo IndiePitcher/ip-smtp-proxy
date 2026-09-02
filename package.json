@@ -20,10 +20,10 @@
     "express": "^5.2.1",
     "fs": "^0.0.1-security",
     "indiepitcher": "^1.5.0",
-    "mailparser": "^3.9.19",
+    "mailparser": "^3.9.20",
     "mixpanel": "^0.18.1",
     "nodemailer": "^7.0.13",
-    "smtp-server": "^3.19.5"
+    "smtp-server": "^3.19.7"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",
